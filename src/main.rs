@@ -4,8 +4,7 @@ use std::io::{Write, stdout, stdin};
 use std::thread;
 use std::sync::mpsc::{channel, TryRecvError};
 use std::time::Duration;
-use std::collections::HashSet;
-use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -53,7 +52,7 @@ fn main() {
         let mut cell_string = String::with_capacity((w * h) as usize);
         for y in 1..=h {
             for x in 1..=w {
-                if let Some(_) = cells.get(&(x as isize, y as isize)) {
+                if cells.contains(&(x as isize, y as isize)) {
                     cell_string.push('█');
                 } else {
                     cell_string.push(' ');
@@ -90,7 +89,7 @@ fn step(last: &CellGrid) -> CellGrid {
         }
     }
 
-    let mut next: CellGrid = CellGrid::new();
+    let mut next = CellGrid::new();
 
     for (cell, &nbrs) in check.iter() {
         if last.contains(cell) && (nbrs == 3 || nbrs == 4) {
