@@ -4,13 +4,16 @@ use std::io::{Write, stdout, stdin};
 use std::thread;
 use std::sync::mpsc::{channel, TryRecvError};
 use std::time::Duration;
-use std::collections::HashSet as Set;
+use std::collections::HashSet;
+use std::collections::HashMap;
 
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
 use rand::{thread_rng, Rng};
+
+type CellGrid = HashSet<(isize, isize)>;
 
 fn main() {
     let stdin = stdin();
@@ -27,7 +30,7 @@ fn main() {
         }
     });
 
-    let mut cells: Set<(isize, isize)> = Set::new();
+    let mut cells = CellGrid::new();
     let (w, h) = termion::terminal_size().unwrap();
     let mut rng = thread_rng();
     for x in (1..=w).map(|x| x as isize) {
@@ -74,38 +77,26 @@ fn main() {
     screen.flush().unwrap();
 }
 
-fn step(last: &Set<(isize, isize)>) -> Set<(isize, isize)> {
-    let mut check = Set::new();
+fn step(last: &CellGrid) -> CellGrid {
+    let mut check = HashMap::new();
 
     for cell in last.iter() {
         for x in -1..=1 {
             for y in -1..=1 {
-                check.insert((cell.0 + x, cell.1 + y));
+                let key = (cell.0 + x, cell.1 + y);
+                let value = check.get(&key).unwrap_or(&0) + 1;
+                check.insert(key, value);
             }
         }
     }
 
-    let mut next = Set::new();
+    let mut next: CellGrid = CellGrid::new();
 
-    for cell in check {
-        let mut nbrs = 0;
-
-        for x in -1..=1 {
-            for y in -1..=1 {
-                if let Some(_) = last.get(&(cell.0 + x, cell.1 + y)) {
-                    nbrs += 1;
-                }
-            }
-        }
-
-        if let Some(_) = last.get(&cell) {
-            if nbrs == 3 || nbrs == 4 {
-                next.insert(cell);
-            }
-        } else {
-            if nbrs == 3 {
-                next.insert(cell);
-            }
+    for (cell, &nbrs) in check.iter() {
+        if last.contains(cell) && (nbrs == 3 || nbrs == 4) {
+            next.insert(*cell);
+        } else if nbrs == 3 {
+            next.insert(*cell);
         }
     }
 
