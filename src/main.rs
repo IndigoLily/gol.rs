@@ -61,39 +61,7 @@ fn main() {
         screen.flush().unwrap();
 
         let handle = thread::spawn(move || {
-            let mut next = Set::new();
-            let mut check = Set::new();
-
-            for cell in cells.iter() {
-                for x in -1..=1 {
-                    for y in -1..=1 {
-                        check.insert((cell.0 + x, cell.1 + y));
-                    }
-                }
-            }
-
-            for cell in check {
-                let mut nbrs = 0;
-                for x in -1..=1 {
-                    for y in -1..=1 {
-                        if let Some(_) = cells.get(&(cell.0 + x, cell.1 + y)) {
-                            nbrs += 1;
-                        }
-                    }
-                }
-
-                if let Some(_) = cells.get(&cell) {
-                    if nbrs == 3 || nbrs == 4 {
-                        next.insert(cell);
-                    }
-                } else {
-                    if nbrs == 3 {
-                        next.insert(cell);
-                    }
-                }
-            }
-
-            next
+            step(&cells)
         });
 
         thread::sleep(Duration::from_millis(1000 / 30));
@@ -104,4 +72,42 @@ fn main() {
     key_handler.join().unwrap();
 
     screen.flush().unwrap();
+}
+
+fn step(last: &Set<(isize, isize)>) -> Set<(isize, isize)> {
+    let mut check = Set::new();
+
+    for cell in last.iter() {
+        for x in -1..=1 {
+            for y in -1..=1 {
+                check.insert((cell.0 + x, cell.1 + y));
+            }
+        }
+    }
+
+    let mut next = Set::new();
+
+    for cell in check {
+        let mut nbrs = 0;
+
+        for x in -1..=1 {
+            for y in -1..=1 {
+                if let Some(_) = last.get(&(cell.0 + x, cell.1 + y)) {
+                    nbrs += 1;
+                }
+            }
+        }
+
+        if let Some(_) = last.get(&cell) {
+            if nbrs == 3 || nbrs == 4 {
+                next.insert(cell);
+            }
+        } else {
+            if nbrs == 3 {
+                next.insert(cell);
+            }
+        }
+    }
+
+    next
 }
